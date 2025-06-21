@@ -11,7 +11,7 @@ func square(n int) int {
 }
 
 // for pr
-
+// test
 func main() {
 	chIn := make(chan int, 10)
 	chOut := make(chan int, 10)
