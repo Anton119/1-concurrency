@@ -10,6 +10,8 @@ func square(n int) int {
 	return n * n
 }
 
+// for pr
+
 func main() {
 	chIn := make(chan int, 10)
 	chOut := make(chan int, 10)
