@@ -3,49 +3,26 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"sync"
+	"net/http"
 )
 
-func square(n int) int {
-	return n * n
+func getRandNum(w http.ResponseWriter, r *http.Request) {
+	n := rand.Intn(6)
+	w.Write([]byte(fmt.Sprintf("%v", n)))
+	fmt.Println("num is returned")
+	return
 }
 
-// for pr
-// test
 func main() {
-	chIn := make(chan int, 10)
-	chOut := make(chan int, 10)
+	router := http.NewServeMux()
+	router.HandleFunc("/rand", getRandNum)
 
-	var wg sync.WaitGroup
-
-	// создает 10 случайных чисел
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		arr := [10]int{}
-		for i := 0; i < len(arr); i++ {
-			n := rand.Intn(100)
-			arr[i] = n
-			chIn <- arr[i]
-		}
-		close(chIn)
-
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for val := range chIn {
-			chOut <- square(val)
-		}
-		close(chOut)
-
-	}()
-
-	wg.Wait()
-
-	for val := range chOut {
-		fmt.Print(val, " ")
+	server := &http.Server{
+		Addr:    ":8081",
+		Handler: router,
 	}
 
+	fmt.Println("server is listening")
+
+	server.ListenAndServe()
 }
