@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"time"
 )
 
+var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func getRandNum(w http.ResponseWriter, r *http.Request) {
-	n := rand.Intn(6) + 1
+	n := rnd.Intn(6) + 1
 	w.Write([]byte(fmt.Sprintf("%v", n)))
 	fmt.Println("num is returned")
 	return
