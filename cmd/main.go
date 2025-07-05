@@ -10,7 +10,7 @@ import (
 func main() {
 
 	conf := configs.LoadConfig()
-	fmt.Println(conf)
+	//fmt.Println(conf)
 
 	router := http.NewServeMux()
 
