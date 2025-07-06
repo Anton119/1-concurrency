@@ -14,9 +14,8 @@ import (
 
 const verificationFile = "pending.json"
 
-type SendRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type SendTarget struct {
+	Email string `json:"email"` // получатель
 }
 
 func NewHandler(router *http.ServeMux, conf *configs.Config) {
@@ -60,14 +59,16 @@ func NewHandler(router *http.ServeMux, conf *configs.Config) {
 			return
 		}
 
-		var req SendRequest
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			http.Error(w, "Неверный формат JSON: "+err.Error(), http.StatusBadRequest)
+		var target SendTarget
+		err := json.NewDecoder(r.Body).Decode(&target)
+		if err != nil || target.Email == "" {
+			http.Error(w, "Неверный JSON или email не указан", http.StatusBadRequest)
 			return
 		}
 
-		if req.Password == "fake_pass" {
+		conf := configs.LoadConfig()
+
+		if conf.Password == "fake_pass" {
 			fmt.Fprintln(w, "Заглушка: письмо отправлено")
 			log.Println("Заглушка: письмо отправлено")
 			return
@@ -82,7 +83,7 @@ func NewHandler(router *http.ServeMux, conf *configs.Config) {
 
 		// Генерируем хеш и сохраняем связку
 		hash := generateHash()
-		data[hash] = req.Email
+		data[hash] = target.Email
 
 		err = saveVerificationData(verificationFile, data)
 		if err != nil {
@@ -91,13 +92,13 @@ func NewHandler(router *http.ServeMux, conf *configs.Config) {
 		}
 
 		e := email.NewEmail()
-		e.From = fmt.Sprintf("Anton Ivanov <%s>", req.Email)
-		e.To = []string{"t4gan20011002@yandex.ru"} // TODO: заменить на динамического получателя
+		e.From = fmt.Sprintf("Anton Ivanov <%s>", conf.Email)
+		e.To = []string{target.Email} // TODO: заменить на динамического получателя
 		e.Subject = "Подтверждение регистрации"
 		e.Text = []byte(fmt.Sprintf("Перейдите по ссылке для подтверждения: http://localhost:8081/verify/%s", hash))
 
 		host := "smtp.yandex.ru"
-		err = e.Send(host+":587", smtp.PlainAuth("", req.Email, req.Password, host))
+		err = e.Send(host+":587", smtp.PlainAuth("", conf.Email, conf.Password, host))
 		if err != nil {
 			http.Error(w, "Не удалось отправить письмо: "+err.Error(), http.StatusInternalServerError)
 			return
